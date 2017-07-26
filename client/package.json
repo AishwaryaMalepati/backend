@@ -1,0 +1,7 @@
+{
+  "name": "scheduler-client",
+  "description": "Scheduler Angular application",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}

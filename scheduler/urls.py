@@ -17,6 +17,10 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from scheduler.views import hello
+from django.views.generic import TemplateView
+from django.conf import settings
+from django.contrib import staticfiles
+
 from champschedule.forms import LoginForm
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -24,5 +28,10 @@ urlpatterns = [
     url(r'^login/$', auth_views.login, name='login'),
     url(r'^logout/$', auth_views.logout, {'next_page': '/login'}),
     url(r'^hello/$', hello),
+    url(r'^schedule/', include('schedule.urls')),
+    url(r'^admin_tools/', include('admin_tools.urls')),
+    url(r'^api/', include('rest_framework.urls')),
+
 ]
 
+admin.site.site_header = 'Champschedule Administration'
