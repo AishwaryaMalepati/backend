@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import ugettext_lazy
-from .models import Driver, Event, CsEmployee
+from .models import *
 
 class MyAdminSite(AdminSite):
     # Text to put at the end of each page's <title>.
@@ -22,14 +22,28 @@ class MyAdminSite(AdminSite):
 #UserAdmin.fieldsets += ('driver_id',)
 
 
-class DriverAdmin(admin.ModelAdmin):
-    list_display = ('first_name','last_name','employment_status','driver_group','sub_group')
-
-admin.site.register(Driver, DriverAdmin)
-
 class EventAdmin(admin.ModelAdmin):
     list_display = ('driver_id','title','start','end')
 
-class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ('first_name','last_name','employment_status')
-admin.site.register(CsEmployee, EmployeeAdmin)
+class GroupAd(admin.ModelAdmin):
+    list_display = ('group_name',)
+admin.site.register(Group, GroupAd)
+
+class SubgroupAd(admin.ModelAdmin):
+    list_display = ('subgroup_name','group')
+admin.site.register(Subgroup, SubgroupAd)
+
+class EmployeeAd(admin.ModelAdmin):
+    list_display = ('first_name','last_name','dob','group','subgroup')
+admin.site.register(Employee, EmployeeAd)
+
+class LocationAd(admin.ModelAdmin):
+    list_display = ('location_name',)
+admin.site.register(Location, LocationAd)
+
+'''class EventAd(admin.ModelAdmin):
+    list_display = ('title','start','end','location','employee')
+
+admin.site.register(Eventdetail, EventAd)'''
+
+
