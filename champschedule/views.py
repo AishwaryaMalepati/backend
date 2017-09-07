@@ -130,6 +130,81 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @list_route(methods=['POST'])
+    def copy(self, request):
+        """
+        """
+
+        emp1_id = request.data.get('emp1', None)
+        emp2_id = request.data.get('emp2', None)
+        start_date = request.data.get('start', None)
+        end_date = request.data.get('end', None)
+
+        if emp1_id and emp2_id and start_date and end_date:
+            try:
+                Employee.objects.get(id=emp2_id)
+            except Employee.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Employee 2 does not exist.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            events_qs = EventDetail.objects.filter(
+                start__date__gte=start_date, end__date__lte=end_date, employee__id=emp1_id
+            )
+            is_updated = events_qs.update(employee=emp2_id)
+
+            resp = {'success': True}
+            if is_updated:
+                resp['message'] = 'Events copied from employee id {} to {}'.format(emp1_id, emp2_id)
+            else:
+                resp['message'] = 'There were no events to copy.'
+
+            return Response(resp)
+        else:
+            return Response({
+                'success': False,
+                'message': 'Required fields not entered.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    @list_route(methods=['POST'])
+    def swap(self, request):
+        """
+        """
+
+        emp1_id = request.data.get('emp1', None)
+        emp2_id = request.data.get('emp2', None)
+        start_date = request.data.get('start', None)
+        end_date = request.data.get('end', None)
+
+        if emp1_id and emp2_id and start_date and end_date:
+            try:
+                Employee.objects.get(id=emp1_id)
+                Employee.objects.get(id=emp2_id)
+            except Employee.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Employee 1 or 2 does not exist.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            emp1_events_qs = EventDetail.objects.filter(
+                start__date__gte=start_date, end__date__lte=end_date, employee__id=emp1_id
+            )
+            emp1_event_ids = list(emp1_events_qs.values_list('id', flat=True))
+            emp2_events_qs = EventDetail.objects.filter(
+                start__date__gte=start_date, end__date__lte=end_date, employee__id=emp2_id
+            ).exclude(id__in=emp1_event_ids)
+
+            emp1_events_qs.update(employee=emp2_id)
+            emp2_events_qs.update(employee=emp1_id)
+
+            return Response({'success': True, 'message': 'Events swapped.'})
+        else:
+            return Response({
+                'success': False,
+                'message': 'Required fields not entered.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EventLocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
