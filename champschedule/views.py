@@ -86,7 +86,9 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
 
         pks = request.query_params.get('pks', None)
         if not pks:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'success': False, 'message': 'No `pks` passed to delete.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         pk_list = pks.split(',')
         EventDetail.objects.filter(id__in=pk_list).delete()
@@ -133,6 +135,18 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST'])
     def copy(self, request):
         """
+        Copies EventDetail objects from one employee to another
+        Methods: POST
+            :param: emp1 - number - required
+            :param: emp2 - number - required
+            :param: start - date (YYYY-MM-DD) - required
+            :param: end - date (YYYY-MM-DD) - required
+        Response:
+            :code: 200
+            :return: Events copied
+
+            :code: 400
+            :return: Employee 2 doesn't exist.
         """
 
         emp1_id = request.data.get('emp1', None)
@@ -142,7 +156,7 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
 
         if emp1_id and emp2_id and start_date and end_date:
             try:
-                Employee.objects.get(id=emp2_id)
+                emp2 = Employee.objects.get(id=emp2_id)
             except Employee.DoesNotExist:
                 return Response({
                     'success': False,
@@ -152,15 +166,21 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
             events_qs = EventDetail.objects.filter(
                 start__date__gte=start_date, end__date__lte=end_date, employee__id=emp1_id
             )
-            is_updated = events_qs.update(employee=emp2_id)
-
-            resp = {'success': True}
-            if is_updated:
-                resp['message'] = 'Events copied from employee id {} to {}'.format(emp1_id, emp2_id)
-            else:
-                resp['message'] = 'There were no events to copy.'
-
-            return Response(resp)
+            copied_events = [
+                EventDetail(
+                    employee=emp2,
+                    event=event.event,
+                    start=event.start,
+                    end=event.end,
+                    location=event.location,
+                    is_daily_detail=event.is_daily_detail
+                ) for event in events_qs
+            ]
+            copied_events_qs = EventDetail.objects.bulk_create(copied_events)
+            return Response({
+                'success': True,
+                'message': 'Events copied from employee id {} to {}'.format(emp1_id, emp2_id)
+            })
         else:
             return Response({
                 'success': False,
@@ -170,6 +190,18 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST'])
     def swap(self, request):
         """
+        Swaps EventDetail objects of two employees
+        Methods: POST
+            :param: emp1 - number - required
+            :param: emp2 - number - required
+            :param: start - date (YYYY-MM-DD) - required
+            :param: end - date (YYYY-MM-DD) - required
+        Response:
+            :code: 200
+            :return: Events copied
+
+            :code: 400
+            :return: Employee 1 or 2 doesn't exist.
         """
 
         emp1_id = request.data.get('emp1', None)
@@ -180,11 +212,18 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
         if emp1_id and emp2_id and start_date and end_date:
             try:
                 Employee.objects.get(id=emp1_id)
+            except Employee.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Employee 1 does not exist.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
                 Employee.objects.get(id=emp2_id)
             except Employee.DoesNotExist:
                 return Response({
                     'success': False,
-                    'message': 'Employee 1 or 2 does not exist.'
+                    'message': 'Employee 2 does not exist.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             emp1_events_qs = EventDetail.objects.filter(
