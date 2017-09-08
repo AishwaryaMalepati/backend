@@ -173,7 +173,7 @@ class CreateScheduleViewSet(viewsets.ModelViewSet):
                     start=event.start,
                     end=event.end,
                     location=event.location,
-                    is_daily_detail=event.is_daily_detail
+                    #is_daily_detail=event.is_daily_detail
                 ) for event in events_qs
             ]
             copied_events_qs = EventDetail.objects.bulk_create(copied_events)

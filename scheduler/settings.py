@@ -180,7 +180,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-JWT = {
+JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=180),
 }
 
