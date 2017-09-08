@@ -1,8 +1,9 @@
+import datetime
+from django.contrib.auth.models import User
+from django.db.models import Q
 from rest_framework import serializers
 from champschedule.models import *
-from django.contrib.auth.models import User
-import datetime
-from collections import namedtuple
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -108,23 +109,17 @@ class CreateScheduleSerializer(serializers.ModelSerializer):
         many = kwargs.pop('many', True)
         super(CreateScheduleSerializer, self).__init__(many=many, *args, **kwargs)
 
-    def get_warning_message(self,obj):
-        warning_msg = ''
-
-        def are_dates_overlapping(curr_start, curr_end, curr_id, curr_employee):
-            Range = namedtuple('Range', ['start', 'end'])
-            r1 = Range(start=curr_start,end=curr_end)
-            for event in EventDetail.objects.all():
-                r2 = Range(start=event.start,end=event.end)
-                latest_start = max(r1.start, r2.start)
-                earliest_end = min(r1.end, r2.end)
-                overlap = (earliest_end - latest_start).days + 1
-                if overlap < 0:
-                    return 'overlaps'
-                else:
-                    return 'no overlap'
-
-        warning_msg = are_dates_overlapping(obj.start, obj.end, obj.id, obj.employee)
+    def get_warning_message(self, obj):
+        start = obj.start
+        end = obj.end
+        count_events_qs = EventDetail.objects.filter(Q(Q(
+            Q(start__date__gte=start) & Q(start__date__lte=end)) | Q(Q(end__date__gte=start) & Q(end__date__lte=end) |
+            Q(Q(start__date__lte=start) & Q(end__date__gte=end))
+        )), employee=obj.employee).count()
+        if count_events_qs > 1:
+            warning_msg = 'overlaps'
+        else:
+            warning_msg = 'no overlap'
 
         return warning_msg
 
