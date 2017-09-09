@@ -1,20 +1,13 @@
-
-# Create your models here.
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import unicode_literals
 
 from django.db import models
+
 
 class Group(models.Model):
     group_name = models.CharField(max_length=30)
     def __str__(self):
         return self.group_name
+
 
 class Subgroup(models.Model):
     subgroup_name = models.CharField(max_length=30)
@@ -23,12 +16,14 @@ class Subgroup(models.Model):
     def __str__(self):
         return self.subgroup_name
 
+
 class Location(models.Model):
     location_name = models.CharField(max_length=30)
     location_color = models.CharField(max_length=7, default="#3a87ad")
 
     def __str__(self):
         return self.location_name
+
 
 class Employee(models.Model):
     first_name = models.CharField(max_length=30,blank=True, null=True)
@@ -45,6 +40,7 @@ class Employee(models.Model):
     def __str__(self):
         return self.last_name
 
+
 class Event(models.Model):
     title = models.CharField(max_length=30, blank=True, null=True)
 
@@ -52,7 +48,7 @@ class Event(models.Model):
         return self.title
 
 
-class Eventdetail(models.Model):
+class EventDetail(models.Model):
    event = models.ForeignKey(Event, models.DO_NOTHING, blank=True, null=True)
    start = models.DateTimeField(blank=True, null=True)
    end = models.DateTimeField(blank=True, null=True)
@@ -61,15 +57,18 @@ class Eventdetail(models.Model):
    is_daily_detail = models.BooleanField
 
    def __str__(self):
-       return self.event
+       return str(self.event)
+
 
 class Track(models.Model):
     name = models.CharField(max_length=30,blank=True, null=True)
     code = models.CharField(max_length=10,blank=True, null=True)
 
+
 class Series(models.Model):
      name = models.CharField(max_length=20,blank=True, null=True)
      code = models.CharField(max_length=10,blank=True, null=True)
+
 
 class Race(models.Model):
     series = models.ForeignKey(Series, models.DO_NOTHING, blank=True, null=True)
@@ -77,10 +76,12 @@ class Race(models.Model):
     track = models.ForeignKey(Track, models.DO_NOTHING, blank=True, null=True)
     location = models.ForeignKey(Location, models.DO_NOTHING, blank=True, null=True)
 
+
 class Perdiemrange(models.Model):
     pd_month = models.CharField(max_length=30)
     pd_start = models.DateField
     pd_end = models.DateField
+
 
 class Perdiem(models.Model):
     employee_id = models.IntegerField(primary_key=True)

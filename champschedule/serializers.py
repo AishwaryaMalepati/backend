@@ -1,8 +1,9 @@
+import datetime
+from django.contrib.auth.models import User
+from django.db.models import Q
 from rest_framework import serializers
 from champschedule.models import *
-from django.contrib.auth.models import User
-import datetime
-from collections import namedtuple
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,10 +73,12 @@ class EmployeeGroupSerializer(serializers.ModelSerializer):
         model = Employee
         fields = ('id','first_name','last_name','dob','group','subgroup')
 
+
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('id','first_name','last_name','dob','group','subgroup')
+
 
 class GroupSerializer(serializers.ModelSerializer):
    # members = EmployeeSerializer(many=True)
@@ -83,19 +86,22 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = ('id','group_name')
 
+
 class SubgroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ('id','subgroup_name','group')
 
+
 class EventDetailSerializer(serializers.ModelSerializer):
     #employee= EmployeeSerializer(many=True)
     event = serializers.SlugRelatedField(slug_field='title', queryset=Event.objects.all() )
     class Meta:
-          model = Eventdetail
+          model = EventDetail
           fields = ('id','event', 'start', 'end')
           #, 'employee', 'location')
           #depth=1
+
 
 class CreateScheduleSerializer(serializers.ModelSerializer):
 
@@ -103,23 +109,17 @@ class CreateScheduleSerializer(serializers.ModelSerializer):
         many = kwargs.pop('many', True)
         super(CreateScheduleSerializer, self).__init__(many=many, *args, **kwargs)
 
-    def get_warning_message(self,obj):
-        warning_msg = ''
-
-        def are_dates_overlapping(curr_start, curr_end, curr_id, curr_employee):
-            Range = namedtuple('Range', ['start', 'end'])
-            r1 = Range(start=curr_start,end=curr_end)
-            for event in Eventdetail.objects.all():
-                r2 = Range(start=event.start,end=event.end)
-                latest_start = max(r1.start, r2.start)
-                earliest_end = min(r1.end, r2.end)
-                overlap = (earliest_end - latest_start).days + 1
-                if overlap < 0:
-                    return 'overlaps'
-                else:
-                    return 'no overlap'
-
-        warning_msg = are_dates_overlapping(obj.start, obj.end, obj.id, obj.employee)
+    def get_warning_message(self, obj):
+        start = obj.start
+        end = obj.end
+        count_events_qs = EventDetail.objects.filter(Q(Q(
+            Q(start__date__gte=start) & Q(start__date__lte=end)) | Q(Q(end__date__gte=start) & Q(end__date__lte=end) |
+            Q(Q(start__date__lte=start) & Q(end__date__gte=end))
+        )), employee=obj.employee).count()
+        if count_events_qs > 1:
+            warning_msg = 'overlaps'
+        else:
+            warning_msg = 'no overlap'
 
         return warning_msg
 
@@ -129,9 +129,10 @@ class CreateScheduleSerializer(serializers.ModelSerializer):
     location_color = serializers.CharField(source='location.location_color', read_only=True)
 
     class Meta:
-          model = Eventdetail
+          model = EventDetail
           fields = ('id','employee','location','location_color','start','end','warning_message')
           lookup_field = 'id'
+
 
 class LocationTrackSerializer(serializers.ModelSerializer):
 
@@ -139,7 +140,7 @@ class LocationTrackSerializer(serializers.ModelSerializer):
     location_color = serializers.CharField(source='location.location_color', read_only=True)
 
     class Meta:
-          model = Eventdetail
+          model = EventDetail
           fields = ('id','employee','location','location_color','start','end')
 
 
@@ -147,6 +148,7 @@ class EventLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model= Location
         fields = ('id','location_name','location_color')
+
 
 class PerdiemSerializer(serializers.ModelSerializer):
     class Meta:

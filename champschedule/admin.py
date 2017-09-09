@@ -44,6 +44,6 @@ admin.site.register(Location, LocationAd)
 '''class EventAd(admin.ModelAdmin):
     list_display = ('title','start','end','location','employee')
 
-admin.site.register(Eventdetail, EventAd)'''
+admin.site.register(EventDetail, EventAd)'''
 
 
